@@ -1,0 +1,82 @@
+:root {
+  font-family: Inter, sans-serif;
+  line-height: 130%;
+  font-weight: 400;
+  color: rgba(255, 255, 255, 1);
+
+  --stroke-glass: linear-gradient(
+          123deg,
+          #FFF 24.18%,
+          rgba(153, 153, 153, 0.20) 92.04%
+  );
+
+  --fill-glass: linear-gradient(
+          298deg,
+          rgba(255, 255, 255, 0.10) 12.24%,
+          rgba(153, 153, 153, 0.00) 78.87%
+  );
+
+}
+
+html, body {
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  min-height: 100vh;
+  background: linear-gradient(
+          180deg,
+          #000 40.38%,
+          #20003E 70.19%,
+          #4D0094 92.79%,
+          #7900EA 100%
+  ) no-repeat fixed;
+  background-size: cover;
+}
+
+.home-page{
+
+}
+a {
+    text-decoration: none; /* Removes the underline */
+    color: inherit;       /* Makes the text match the color of the parent div */
+    cursor: pointer;
+}
+
+/* Optional: Stop the color from changing after you click it */
+a:visited {
+    color: inherit;
+}
+.error-screen {
+    display: flex;                  /* Enable flexbox */
+    flex-direction: column;         /* Stack H2 and Button vertically */
+    justify-content: center;        /* Center vertically */
+    align-items: center;            /* Center horizontally */
+    min-height: 100vh;              /* Use full screen height */
+    gap: 36px;                      /* Add space between the text and button */
+    text-align: center;
+    color: white;
+}
+
+.error-screen h2 {
+    font-size: 32px;
+    margin: 0;
+}
+
+.error-screen button {
+    display: inline-flex;
+    padding: 8px 26px;
+    justify-content: center;
+    align-items: center;
+    gap: 10px;
+    border-radius: 30px;
+    background: var(--fill-glass, linear-gradient(298deg, rgba(255, 255, 255, 0.10) 12.24%, rgba(153, 153, 153, 0.00) 78.87%));
+    color: white;
+    font-size: 18px;
+    overflow: hidden;
+    isolation: isolate;
+
+    background-clip: padding-box;
+    border: 1px solid white;
+}

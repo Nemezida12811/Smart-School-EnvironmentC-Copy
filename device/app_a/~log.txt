@@ -1,0 +1,4 @@
+[-ERROR-]: Settings file not found
+[-ERROR-]: Unexpected error in init ('NoneType' object isn't iterable)
+[-ERROR-]: Unexpected error in update settings ('NoneType' object isn't iterable)
+[-ERROR-]: Unexpected error in update settings ('NoneType' object isn't iterable)

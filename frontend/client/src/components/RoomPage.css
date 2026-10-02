@@ -1,0 +1,123 @@
+.room-page {
+    color: #fff;
+}
+
+.room-content {
+    width: 1228px;
+    margin: 40px auto;
+}
+
+.room-header {
+    display: flex;
+    justify-content: space-between;
+    padding: 40px 0;
+    align-items: start;
+    margin-bottom: 10px;
+}
+
+.room-title {
+    font-size: 64px;
+    font-weight: 400;
+    margin: 0;
+    padding: 14px 0;
+}
+
+.comfort-section {
+    display: flex;
+    gap: 70px;
+    align-items: flex-start;
+    margin-bottom: 60px;
+}
+
+.advice-header {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-top: 24px;
+}
+
+.advice-header h2{
+    font-size: 30px;
+    font-weight: 300;
+    margin-bottom: 10px;
+    margin-top: 10px;
+}
+
+.advice-list {
+    list-style-type: disc;
+    padding: 10px 0 10px 60px;
+    color: #ffffff;
+    line-height: 1.9;
+    font-size: 18px;
+}
+
+.section-label {
+    color: #ffffff;
+    margin-bottom: 20px;
+    font-size: 24px;
+    font-weight: 400;
+}
+
+.parameters-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
+}
+
+.parameter-card {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    padding: 24px;
+    width: 348px;
+    height: 88px;
+    border-radius: 30px;
+    background: var(--fill-glass, linear-gradient(298deg, rgba(255, 255, 255, 0.10) 12.24%, rgba(153, 153, 153, 0.00) 78.87%));
+    color: white;
+    font-size: 24px;
+    overflow: hidden;
+    isolation: isolate;
+
+    background-clip: padding-box;
+
+}
+.parameter-card::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: 30px;
+    padding: 2px;
+    background: var(--stroke-glass);
+    -webkit-mask: linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0) border-box;
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    pointer-events: none;
+}
+
+.parameter-label {
+    font-size: 30px;
+}
+
+.parameter-value {
+    align-self: flex-end;
+    font-size: 42px;
+}
+
+.actions{
+    display: flex;
+    flex-direction: column;
+    row-gap: 12px;
+}
+.loading-advice {
+    color: #888;
+    font-style: italic;
+    animation: pulse 1.5s infinite;
+}
+
+@keyframes pulse {
+    0% { opacity: 0.5; }
+    50% { opacity: 1; }
+    100% { opacity: 0.5; }
+}

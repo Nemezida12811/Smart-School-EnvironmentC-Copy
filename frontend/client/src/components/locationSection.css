@@ -1,0 +1,159 @@
+.locations-page {
+    display: flex;
+    flex-direction: column;
+}
+.location-section{
+    padding-bottom: 20px;
+}
+
+.locations-content {
+    width: 1228px;
+    margin: 40px auto;
+
+}
+.page-details-header{
+    padding:40px 0;
+}
+.controls-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 30px;
+}
+.search-container {
+    position: relative;
+    display: flex;
+    gap: 10px;
+}
+
+.room-search-input {
+    width: 100%;
+    padding: 10px 40px 10px 15px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid #ffffff;
+    border-radius: 20px;
+    color: white;
+}
+.search-icon {
+    position: absolute;
+    right: 16px;  /* distance from the right edge */
+    top: 50%;
+    transform: translateY(-50%);
+    pointer-events: none; /* ensures it doesn’t block typing */
+}
+
+.sort-container {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.sort-select {
+    border-radius: 30px;
+    border: none;
+    outline: none;
+
+    background: #ffffff;
+    color: #000000;
+    font-size: 16px;
+    display: flex;
+    padding: 8px 20px;
+    align-items: center;
+    gap: 10px;
+    width: 270px;
+}
+
+.rooms-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    gap: 20px;
+}
+
+.page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: start;
+    padding: 40px 0;
+    margin-bottom: 48px;
+}
+
+.page-header-title {
+    font-size: 64px;
+    font-weight: 400;
+    margin: 0;
+    padding: 14px 0;
+    margin-bottom: 50px;
+}
+.page-header-actions{
+    display: flex;
+    flex-direction: column;
+    row-gap: 12px;
+}
+.access-id{
+    font-size: 24px;
+    margin: 0;
+}
+
+.subtitles {
+    opacity: 0.5;
+    font-size: 20px;
+}
+
+.section-title {
+    font-size: 36px;
+    margin-bottom: 24px;
+    font-weight: 400;
+}
+
+.location-block {
+    margin-bottom: 40px;
+    padding: 0 0;
+}
+
+.location-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+.location-header h3{
+    font-size: 26px;
+    font-weight: 400;
+}
+
+.rooms-row {
+    display: flex;
+    gap: 16px;
+    align-items: center;
+}
+.rooms {
+    display: flex;
+    justify-content: space-between;
+}
+
+.all-rooms-btn {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    background: none;
+    border: none;
+    color: white;
+    cursor: pointer;
+    font-size: 20px;
+}
+
+.empty-text {
+    opacity: 0.5;
+    font-size: 20px;
+    margin: 24px 0;
+}
+
+.center-action {
+    display: flex;
+    justify-content: center;
+    margin-top: 48px;
+}
+
+.icon-button{
+    background: none;
+    border: none;
+}

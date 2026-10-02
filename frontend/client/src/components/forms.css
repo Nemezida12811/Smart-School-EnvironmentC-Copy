@@ -1,0 +1,185 @@
+.page {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 30px;
+}
+
+
+.login-card {
+    min-width: 310px;
+    position: relative;
+    padding: 42px 36px;
+
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 28px;
+
+    border-radius: 30px;
+    background: var(--fill-glass, linear-gradient(298deg, rgba(255, 255, 255, 0.10) 12.24%, rgba(153, 153, 153, 0.00) 78.87%));
+    color: white;
+    overflow: hidden;
+    isolation: isolate;
+
+    background-clip: padding-box;
+    border: 1px solid transparent;
+}
+.login-card::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: 30px;
+    padding: 2px;
+    background: var(--stroke-glass);
+    -webkit-mask: linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0) border-box;
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    pointer-events: none;
+}
+
+.title{
+    font-size: 32px;
+    font-weight: 300;
+    margin: 8px 0;
+}
+.title-sensor{
+    font-size: 32px;
+    font-weight: 300;
+    margin: 12px 0;
+}
+.input-group{
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    min-height: 44px;
+    gap: 10px;
+}
+.subtitle{
+    font-size: 20px;
+    font-weight: 300;
+    opacity: 60%;
+    margin: 0;
+    margin-top: -24px;
+    margin-bottom: 24px;
+}
+.subsubtitle{
+    font-size: 18px;
+    font-weight: 300;
+    margin-top: -2px;
+    margin-bottom: -20px;
+
+}
+.input {
+
+    border-radius: 30px;
+    border: none;
+    outline: none;
+
+    background: #ffffff;
+    color: #000000;
+    font-size: 16px;
+    display: flex;
+    padding: 8px 20px;
+    align-items: center;
+    gap: 10px;
+    width: 270px;
+}
+
+.input::placeholder {
+    opacity: 70%;
+}
+
+.link{
+    cursor: pointer;
+    opacity: 40%;
+    font-size: 16px;
+    font-weight: 300;
+    margin: 0;
+}
+
+.link:hover{
+    opacity: 1;
+}
+
+.checkbox-line{
+    position: relative;
+    display: flex;
+    padding: 8px 20px;
+    justify-content: space-between;
+    align-items: center;
+    border-radius: 30px;
+    background: var(--fill-glass, linear-gradient(298deg, rgba(255, 255, 255, 0.10) 12.24%, rgba(153, 153, 153, 0.00) 78.87%));
+    color: white;
+    font-size: 16px;
+    font-weight: 300;
+    overflow: hidden;
+    isolation: isolate;
+    width: 270px;
+
+    background-clip: padding-box;
+    border: 1px solid transparent;
+}
+.checkbox-line::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: 30px;
+    padding: 2px;
+    background: var(--stroke-glass);
+    -webkit-mask: linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0) border-box;
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    pointer-events: none;
+}
+input[type="checkbox"]{
+    transform: scale(1.5);
+    cursor: pointer;
+    accent-color: #000000;
+}
+
+.my-select__control {
+    background-color: rgba(55, 50, 50, 0) !important;
+    border-radius: 30px !important;
+    border: 1px solid #cbd5e1 !important;
+    padding: 2px 8px !important;
+    color: white;
+    width:310px;
+}
+
+.my-select__control--is-focused {
+    border-color: #7300DD !important;
+    box-shadow: 0 0 0 1px #7300DD !important;
+}
+
+.my-select__menu {
+    background-color: #ffffff !important;
+    border-bottom-left-radius: 8px !important;
+    border-bottom-right-radius: 8px !important;
+    border-top-right-radius: 0 !important;
+    border-top-left-radius: 0 !important;
+}
+
+.my-select__option {
+    background-color: rgb(255, 255, 255) !important;
+    color: #000000 !important;
+}
+
+.my-select__option--is-focused {
+    background-color: #d5d5d5 !important;
+}
+
+.my-select__single-value {
+    color: #ffffff !important;
+}
+.my-select__input {
+    color: #ffffff !important;
+}
+.checkbox-container{
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}

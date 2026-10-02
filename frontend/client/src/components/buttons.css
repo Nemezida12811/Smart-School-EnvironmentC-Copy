@@ -1,0 +1,108 @@
+/*big button*/
+
+.big-button {
+    position: relative;
+    display: inline-flex;
+    padding: 8px 26px;
+    justify-content: center;
+    align-items: center;
+    gap: 10px;
+    border-radius: 30px;
+    background: var(--fill-glass, linear-gradient(298deg, rgba(255, 255, 255, 0.10) 12.24%, rgba(153, 153, 153, 0.00) 78.87%));
+    color: white;
+    font-size: 24px;
+    overflow: hidden;
+    isolation: isolate;
+
+    background-clip: padding-box;
+    border: 1px solid transparent;
+}
+
+.big-button::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: 30px;
+    padding: 2px;
+    background: var(--stroke-glass);
+    -webkit-mask: linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0) border-box;
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    pointer-events: none;
+}
+
+.big-button:hover {
+    opacity: 60%;
+    cursor: pointer;
+}
+
+/*small button*/
+
+
+
+.small-button {
+    position: relative;
+    display: inline-flex;
+    padding: 12px 14px;
+    align-items: center;
+    gap: 8px;
+    justify-content: center;
+    border-radius: 30px;
+    background: var(--fill-glass, linear-gradient(298deg, rgba(255, 255, 255, 0.10) 12.24%, rgba(153, 153, 153, 0.00) 78.87%));
+    color: white;
+    font-size: 18px;
+    overflow: hidden;
+    isolation: isolate;
+
+    background-clip: padding-box;
+    border: 1px solid transparent;
+}
+
+.small-button::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: 30px;
+    padding: 2px;
+    background: var(--stroke-glass);
+    -webkit-mask: linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0) border-box;
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    pointer-events: none;
+}
+
+.small-button:hover {
+    opacity: 60%;
+    cursor: pointer;
+}
+
+/*back button*/
+.back-button{
+    display: inline-flex;
+    align-items: center;
+    font-size: 24px;
+    gap: 10px;
+    color: #FFFFFF;
+    background: none;
+    padding: 0;
+    border: none;
+}
+.back-button--transparent{
+    opacity:30%;
+}
+/* HEADER */
+.back {
+    width: 100%;
+}
+
+/* CENTERED CONTENT */
+.wrapper {
+    max-width: 1228px;
+    margin: 0 auto;
+
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}

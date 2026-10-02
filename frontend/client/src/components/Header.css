@@ -1,0 +1,66 @@
+/* HEADER */
+.header {
+    width: 100%;
+}
+
+/* CENTERED CONTENT */
+.wrapper {
+    max-width: 1228px;
+    margin: 0 auto;
+
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+/* LOGO */
+.logo-link {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 0;
+    margin-left: -40px;
+}
+
+/* RIGHT SIDE */
+.nav {
+    display: flex;
+    align-items: center;
+    gap: 50px;
+}
+
+/* USERNAME */
+.username {
+    font-size: 18px;
+}
+
+/* LOGOUT BUTTON */
+.logout {
+    display: flex;
+    align-items: center;
+
+    background: none;
+    border: none;
+    color: #ffffff;
+    cursor: pointer;
+
+    font-size: 18px;
+}
+
+.login {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+
+    background: none;
+    border: none;
+    color: #ffffff;
+    cursor: pointer;
+
+    font-size: 18px;
+}
+button:hover{
+    opacity: 60%;
+    cursor:pointer;
+}
+

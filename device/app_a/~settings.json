@@ -1,0 +1,1 @@
+{"user": {"login": "Boss", "password": "4444"}, "mqtt": {"server": "broker.hivemq.com"}, "measurement_interval": 10000, "wifi": {"ssid": "Komiki", "password": "Parol222"}, "units": "standard", "ntp_host": "pool.ntp.org", "id": "com-de6c1bd8f65bcff7-fort"}
