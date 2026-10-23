@@ -69,7 +69,7 @@ CPU_FREQ_HIGH = 125_000_000
 
 #git
 PROJECT_ID = "77921201"
-ACCESS_TOKEN = "glpat-oPwIxnXQKyW8mxGRP34QjG86MQp1OmpyYzV3Cw.01.121nei4qh"
+ACCESS_TOKEN = ""
 GIT_URL = f"https://gitlab.com/api/v4/projects/{PROJECT_ID}/packages/generic/ota_comfort"
 VERSION_URL = f"{GIT_URL}/latest/version.json"
 GIT_HEADERS = {
