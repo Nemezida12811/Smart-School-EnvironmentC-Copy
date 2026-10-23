@@ -1,7 +1,6 @@
 import json
 import logging
 import math
-import re
 
 from .config import settings
 from .errors import iso
@@ -18,14 +17,43 @@ _METRICS = [
     ("sound", (0, 50), 40),
 ]
 
+# Structured Outputs: модель гарантовано повертає JSON саме такої форми.
+# Корінь мусить бути об'єктом, тому масив порад лежить у полі "recommendations".
+_TIPS_SCHEMA = {
+    "name": "comfort_recommendations",
+    "strict": True,
+    "schema": {
+        "type": "object",
+        "properties": {
+            "recommendations": {
+                "type": "array",
+                "items": {
+                    "type": "object",
+                    "properties": {
+                        "priority": {"type": "string", "enum": ["high", "medium", "low"]},
+                        "type": {"type": "string", "enum": [m[0] for m in _METRICS]},
+                        "message": {"type": "string"},
+                        "reason": {"type": "string"},
+                    },
+                    "required": ["priority", "type", "message", "reason"],
+                    "additionalProperties": False,
+                },
+            }
+        },
+        "required": ["recommendations"],
+        "additionalProperties": False,
+    },
+}
+
 _ai_client = None
 
 
 def _get_ai():
+    """Створюється ліниво, щоб відсутній OPENAI_API_KEY не ламав запуск сервера."""
     global _ai_client
     if _ai_client is None:
-        from google import genai
-        _ai_client = genai.Client(api_key=settings.google_api_key)
+        from openai import AsyncOpenAI
+        _ai_client = AsyncOpenAI(api_key=settings.openai_api_key or None, timeout=30, max_retries=1)
     return _ai_client
 
 
@@ -59,7 +87,7 @@ async def generate_tips(audience_id: str) -> list | None:
         return None
 
     u = latest.get("units") or {}
-    prompt = f"""Hi. You are an indoor comfort inspector. You have the following sensor data:
+    prompt = f"""You are an indoor comfort inspector. You have the following sensor data:
 Temperature: {latest['temperature']} {u.get('temperature', '')}
 Humidity: {latest['humidity']} {u.get('humidity', '')}
 Gas (Air Quality): {latest['gas']} {u.get('gas', '')}
@@ -68,18 +96,19 @@ Sound (Noise): {latest['sound']} {u.get('sound', '')}
 
 Ideal ranges: Temperature (20-24), Humidity (30-60%), Gas (400-1000 ppm), Light (300-1000 lx), Sound (0-50 dB).
 
-Based on this data, generate a list of 2-3 specific recommendations to improve comfort.
-Return ONLY a JSON array of objects with the following format:
-[{{"priority": "high"|"medium"|"low", "type": "temperature"|"humidity"|"gas"|"light"|"sound", "message": "recommendation text", "reason": "why this is important"}}]
-"""
+Based on this data, give 2-3 specific recommendations to improve comfort.
+For each one provide: priority (high/medium/low), type (the sensor it concerns),
+message (the recommendation text) and reason (why this is important)."""
     try:
-        response = await _get_ai().aio.models.generate_content(
-            model=settings.gemini_model,
-            contents=prompt,
-            config={"response_mime_type": "application/json"},
+        response = await _get_ai().chat.completions.create(
+            model=settings.openai_model,
+            messages=[
+                {"role": "system", "content": "You are a concise indoor comfort assistant."},
+                {"role": "user", "content": prompt},
+            ],
+            response_format={"type": "json_schema", "json_schema": _TIPS_SCHEMA},
         )
-        clean = re.sub(r"```json|```", "", response.text).strip()
-        return json.loads(clean)
+        return json.loads(response.choices[0].message.content)["recommendations"]
     except Exception:
         log.exception("❌ [AI] Error generating tips")
         return []

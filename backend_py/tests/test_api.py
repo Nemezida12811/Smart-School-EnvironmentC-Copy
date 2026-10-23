@@ -110,11 +110,38 @@ def test_locations_and_devices(client):
     assert client.get("/api/auth/me", headers=A).json()["data"]["ownedLocationIds"] == []
 
 
+def _fake_ai(create):
+    """Підміна OpenAI-клієнта: об'єкт із chat.completions.create(**kwargs)."""
+    ns = lambda **kw: type("N", (), kw)  # noqa: E731
+    return ns(chat=ns(completions=ns(create=staticmethod(create))))
+
+
+def test_recommendations_openai_success(client, monkeypatch):
+    telemetry("dev-8")
+    from app import comfort
+    seen = {}
+
+    async def create(**kwargs):
+        seen.update(kwargs)
+        tips = [{"priority": "high", "type": "gas", "message": "Open a window", "reason": "CO2 is high"}]
+        msg = type("M", (), {"content": json.dumps({"recommendations": tips})})
+        return type("R", (), {"choices": [type("C", (), {"message": msg})]})
+
+    monkeypatch.setattr(comfort, "_get_ai", lambda: _fake_ai(create))
+    r = client.get("/api/comfort/dev-8/recommendations")
+    assert r.status_code == 200
+    assert r.json()["data"]["recommendations"][0]["message"] == "Open a window"
+    assert seen["response_format"]["type"] == "json_schema" and seen["response_format"]["json_schema"]["strict"] is True
+    assert "gas" in seen["messages"][1]["content"].lower() or "Gas" in seen["messages"][1]["content"]
+
+
 def test_recommendations_empty_list_is_ok(client, monkeypatch):
     telemetry("dev-7")
     from app import comfort
-    async def fake(*a, **k): raise RuntimeError("no key")
-    monkeypatch.setattr(comfort, "_get_ai", lambda: type("X", (), {"aio": type("Y", (), {"models": type("Z", (), {"generate_content": staticmethod(fake)})})})())
+
+    async def boom(**kwargs): raise RuntimeError("no key")
+
+    monkeypatch.setattr(comfort, "_get_ai", lambda: _fake_ai(boom))
     r = client.get("/api/comfort/dev-7/recommendations")
     assert r.status_code == 200 and r.json()["data"]["recommendations"] == []
     assert r.json()["data"]["audienceId"] is None
@@ -136,3 +163,33 @@ def test_timestamp_formats():
     import time
     assert abs(parse_timestamp(None) - time.time() * 1000) < 2000
     assert abs(parse_timestamp("garbage") - time.time() * 1000) < 2000
+
+
+def test_openai_api_connection():
+    """Перевіряє реальне підключення до OpenAI API."""
+    from openai import OpenAI
+    from dotenv import load_dotenv
+
+    load_dotenv()
+
+    api_key = os.getenv("OPENAI_API_KEY")
+    if not api_key:
+        pytest.skip("OPENAI_API_KEY is not configured")
+
+    model = os.getenv("OPENAI_MODEL")
+    if not model:
+        pytest.fail("OPENAI_MODEL is not configured in .env")
+
+    with OpenAI(api_key=api_key) as client:
+        response = client.chat.completions.create(
+            model=model,
+            messages=[
+                {
+                    "role": "user",
+                    "content": "Reply with exactly: OpenAI API works!",
+                }
+            ],
+            max_completion_tokens=30,
+        )
+
+    assert response.choices[0].message.content.strip() == "OpenAI API works!"
