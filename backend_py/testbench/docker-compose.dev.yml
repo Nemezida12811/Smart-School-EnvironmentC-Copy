@@ -17,5 +17,5 @@ services:
       MONGO_URI: mongodb://mongo:27017
       MQTT_URL: mqtt://mosquitto:1883
       JWT_SECRET: dev-secret
-      GOOGLE_API_KEY: ${GOOGLE_API_KEY:-}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
     depends_on: [mongo, mosquitto]

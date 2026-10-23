@@ -10,8 +10,8 @@ class Settings(BaseSettings):
     jwt_secret: str = ""
     mqtt_url: str = ""
     mqtt_client_id: str = ""
-    google_api_key: str = ""
-    gemini_model: str = "gemini-3-flash-preview"
+    openai_api_key: str = ""
+    openai_model: str = "gpt-4o-mini"   # має підтримувати Structured Outputs (json_schema)
     # облікові дані, які бекенд відправляє пристрою в MQTT-налаштуваннях
     device_admin_login: str = "Admin"
     device_admin_password: str = "4444"

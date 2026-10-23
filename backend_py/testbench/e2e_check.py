@@ -144,7 +144,7 @@ def main():
         st, rec = api.call("GET", f"/api/comfort/{d0}/recommendations")
         tips = rec.get("data", {}).get("recommendations")
         check(st == 200 and isinstance(tips, list), "рекомендації: 200 і список", f"{st} {rec}")
-        check(bool(tips), "  Gemini повернув поради (потрібен GOOGLE_API_KEY)", "порожній список", warn_only=True)
+        check(bool(tips), "  AI повернув поради (потрібен OPENAI_API_KEY)", "порожній список", warn_only=True)
         if tips:
             check(all({"priority", "type", "message", "reason"} <= set(t) for t in tips), "  структура порад")
 
