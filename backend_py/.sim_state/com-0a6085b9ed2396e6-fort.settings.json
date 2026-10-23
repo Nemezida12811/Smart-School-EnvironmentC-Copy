@@ -1,0 +1,1 @@
+{"user": {"login": "Admin", "password": "4444"}, "mqtt": {"server": "localhost"}, "measurement_interval": 10000, "wifi": {"ssid": "Komiki", "password": "Parol222"}, "units": "metric", "ntp_host": "pool.ntp.org", "id": "com-0a6085b9ed2396e6-fort"}
