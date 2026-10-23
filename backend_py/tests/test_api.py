@@ -1,0 +1,138 @@
+"""Смоук-тест усього API на mongomock (реальна MongoDB не потрібна)."""
+import asyncio
+import json
+import os
+
+os.environ["JWT_SECRET"] = "test-secret"
+
+import mongomock
+import pytest
+from fastapi.testclient import TestClient
+
+from app.comfort import calculate_manual_comfort
+from app.db import database
+from app.main import app
+from app.telemetry import convert_units, handle_message, parse_telemetry, parse_timestamp
+
+
+class _Cursor:
+    def __init__(self, cur): self.cur = cur
+    async def to_list(self, _=None): return list(self.cur)
+
+
+class _AsyncCollection:
+    def __init__(self, col): self.col = col
+    def __getattr__(self, name):
+        fn = getattr(self.col, name)
+        if name == "find":
+            return lambda *a, **k: _Cursor(fn(*a, **k))
+        async def call(*a, **k): return fn(*a, **k)
+        return call
+
+
+class _FakeDb:
+    def __init__(self): self.db = mongomock.MongoClient().db
+    def __getitem__(self, name): return _AsyncCollection(self.db[name])
+
+
+@pytest.fixture()
+def client():
+    database.db = _FakeDb()
+    return TestClient(app)  # без `with` -> lifespan (реальні Mongo/MQTT) не запускається
+
+
+def hdr(token): return {"Authorization": f"Bearer {token}"}
+
+
+def register(c, name, email):
+    r = c.post("/api/auth/register", json={"username": name, "email": email, "password": "secret1"})
+    assert r.status_code == 201, r.text
+    return r.json()["data"]
+
+
+def telemetry(device_id, raw=32768):
+    payload = {"timestamp": 1765978387, "sensors": {
+        "temperature": {"value": 22, "units": "C"}, "humidity": {"value": 45, "units": "%"},
+        "gas": {"value": raw, "units": "ppm"}, "light": {"value": raw, "units": "lx"},
+        "sound": {"value": raw, "units": "dB"}}}
+    asyncio.run(handle_message(f"iot/device/{device_id}/telemetry", json.dumps(payload).encode()))
+
+
+def test_auth(client):
+    assert client.get("/").json() == {"message": "Backend is running"}
+    assert client.post("/api/auth/register", json={"email": "a@b.c"}).json()["error"]["message"] == "All fields are required"
+    assert client.post("/api/auth/register", json={"username": "u", "email": "bad", "password": "123456"}).status_code == 400
+    d = register(client, "roma", "roma@x.sk")
+    assert client.post("/api/auth/register", json={"username": "r", "email": "roma@x.sk", "password": "123456"}).status_code == 400
+    assert client.post("/api/auth/login", json={"email": "roma@x.sk", "password": "wrong!!"}).status_code == 401
+    login = client.post("/api/auth/login", json={"email": "roma@x.sk", "password": "secret1"}).json()["data"]
+    assert login["user"]["id"] == d["user"]["id"] and login["user"]["createdAt"].endswith("Z")
+    assert client.get("/api/auth/me", headers=hdr(login["token"])).json()["data"]["username"] == "roma"
+    assert client.get("/api/auth/me").json()["error"]["message"] == "No token provided"
+    assert client.get("/api/auth/me", headers=hdr("garbage")).status_code == 401
+
+
+def test_locations_and_devices(client):
+    admin, other = register(client, "a", "a@x.sk"), register(client, "o", "o@x.sk")
+    A, O = hdr(admin["token"]), hdr(other["token"])
+
+    loc = client.post("/api/locations", json={"name": "Lab"}, headers=A).json()["data"]
+    lid = loc["id"]
+    lst = client.get("/api/locations", headers=A).json()["data"]
+    assert [l["id"] for l in lst["created"]] == [lid] and lst["joined"] == []
+
+    assert client.patch(f"/api/locations/{lid}", json={"name": "X"}, headers=O).status_code == 403
+    assert client.patch(f"/api/locations/{lid}", json={"name": "Lab2"}, headers=A).status_code == 200
+    assert client.get("/api/locations/not-an-id").status_code == 404
+
+    assert client.post(f"/api/locations/{lid}/devices", json={"deviceId": "dev1"}, headers=A).status_code == 404
+    telemetry("dev1")
+    assert client.post(f"/api/locations/{lid}/devices", json={"deviceId": "dev1", "name": "Room 1"}, headers=A).status_code == 200
+
+    s = client.get("/api/comfort/dev1/sensors").json()["data"]
+    assert s["name"] == "Room 1" and s["hidden"] is False
+    assert s["latestReading"]["gas"] == 5100 and s["latestReading"]["sound"] == 80
+    assert s["timestamp"] == "2025-12-17T13:33:07.000Z"
+    assert client.get("/api/comfort/dev1").json()["data"]["comfortPercentage"] == 45
+
+    assert client.patch(f"/api/locations/{lid}/devices/dev1/hide", headers=A).status_code == 200
+    assert client.get("/api/comfort/dev1/sensors").json()["data"]["hidden"] is True
+    assert client.patch(f"/api/locations/{lid}/devices/dev1/show", headers=A).status_code == 200
+    r = client.patch(f"/api/locations/{lid}/devices/dev1/settings", json={"interval": 5000}, headers=A).json()["data"]
+    assert r["topic"] == "iot/backend/dev1/settings" and r["settings"]["measurement_interval"] == 5000
+
+    assert client.post(f"/api/locations/{lid}/users", json={"targetUserId": other["user"]["id"]}, headers=A).status_code == 200
+    assert client.post(f"/api/locations/{lid}/users", json={"targetUserId": other["user"]["id"]}, headers=A).status_code == 400
+    assert len(client.get("/api/locations", headers=O).json()["data"]["joined"]) == 1
+    assert client.delete(f"/api/locations/{lid}/users/{admin['user']['id']}", headers=A).status_code == 400
+    assert client.delete(f"/api/locations/{lid}/users/{other['user']['id']}", headers=A).status_code == 200
+    assert client.delete(f"/api/locations/{lid}", headers=A).status_code == 200
+    assert client.get("/api/auth/me", headers=A).json()["data"]["ownedLocationIds"] == []
+
+
+def test_recommendations_empty_list_is_ok(client, monkeypatch):
+    telemetry("dev-7")
+    from app import comfort
+    async def fake(*a, **k): raise RuntimeError("no key")
+    monkeypatch.setattr(comfort, "_get_ai", lambda: type("X", (), {"aio": type("Y", (), {"models": type("Z", (), {"generate_content": staticmethod(fake)})})})())
+    r = client.get("/api/comfort/dev-7/recommendations")
+    assert r.status_code == 200 and r.json()["data"]["recommendations"] == []
+    assert r.json()["data"]["audienceId"] is None
+    assert client.get("/api/comfort/missing/recommendations").status_code == 404
+
+
+def test_telemetry_helpers():
+    t = parse_telemetry({"sensors": {"temperature": {"value": "abc", "units": "C"}}})
+    assert t["temperature"] != t["temperature"]  # NaN
+    assert calculate_manual_comfort({"temperature": 22, "humidity": 45, "gas": 600, "light": 500, "sound": 30}) == 100
+    assert calculate_manual_comfort({"temperature": 27, "humidity": 45, "gas": 600, "light": 500, "sound": 30}) == 88
+
+
+def test_timestamp_formats():
+    assert parse_timestamp(1765978387) == 1765978387000          # epoch, секунди (MQTT.md)
+    assert parse_timestamp("1765978387") == 1765978387000
+    assert parse_timestamp("2025-12-17T13:33:07Z") == 1765978387000   # ISO — формат прошивки
+    assert parse_timestamp(1765978387000) == 1765978387000       # мілісекунди
+    import time
+    assert abs(parse_timestamp(None) - time.time() * 1000) < 2000
+    assert abs(parse_timestamp("garbage") - time.time() * 1000) < 2000

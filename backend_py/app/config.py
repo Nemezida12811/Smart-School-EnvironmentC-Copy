@@ -1,0 +1,20 @@
+from pydantic_settings import BaseSettings, SettingsConfigDict
+
+
+class Settings(BaseSettings):
+    model_config = SettingsConfigDict(env_file=".env", extra="ignore")
+
+    port: int = 3000
+    mongo_uri: str = ""
+    mongo_db_name: str = "iotProj"
+    jwt_secret: str = ""
+    mqtt_url: str = ""
+    mqtt_client_id: str = ""
+    google_api_key: str = ""
+    gemini_model: str = "gemini-3-flash-preview"
+    # облікові дані, які бекенд відправляє пристрою в MQTT-налаштуваннях
+    device_admin_login: str = "Admin"
+    device_admin_password: str = "4444"
+
+
+settings = Settings()

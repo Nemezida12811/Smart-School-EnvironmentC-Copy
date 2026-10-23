@@ -1,0 +1,21 @@
+# Локальний стенд: MongoDB + MQTT-брокер + backend.  Запуск (з папки testbench):
+#   docker compose -f docker-compose.dev.yml up --build
+# Потім:  python device_simulator.py   і   python e2e_check.py
+services:
+  mongo:
+    image: mongo:7
+    ports: ["27017:27017"]
+  mosquitto:
+    image: eclipse-mosquitto:2
+    ports: ["1883:1883"]
+    volumes: ["./mosquitto.conf:/mosquitto/config/mosquitto.conf:ro"]
+  backend:
+    build: ..
+    ports: ["3001:3001"]
+    environment:
+      PORT: "3001"
+      MONGO_URI: mongodb://mongo:27017
+      MQTT_URL: mqtt://mosquitto:1883
+      JWT_SECRET: dev-secret
+      GOOGLE_API_KEY: ${GOOGLE_API_KEY:-}
+    depends_on: [mongo, mosquitto]

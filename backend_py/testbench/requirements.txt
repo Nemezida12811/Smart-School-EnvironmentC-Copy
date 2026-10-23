@@ -1,0 +1,2 @@
+paho-mqtt>=2.1
+mongomock>=4.2    # лише для run_backend_inmemory.py
