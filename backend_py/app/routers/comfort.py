@@ -11,7 +11,7 @@ router = APIRouter(prefix="/api/comfort")
 
 
 def _parse_int(value: str) -> int | None:
-    """Як parseInt у JS: '12abc' -> 12, 'abc' -> None (у JSON було б null)."""
+    """Like parseInt in JS: '12abc' -> 12, 'abc' -> None (would be null in JSON)."""
     m = re.match(r"\s*([+-]?\d+)", value)
     return int(m.group(1)) if m else None
 
@@ -29,7 +29,7 @@ async def get_comfort_level(audience_id: str):
 async def get_recommendations(audience_id: str):
     with failing_as("Failed to get recommendations", with_details=True):
         tips = await comfort.generate_tips(audience_id)
-        if tips is None:  # порожній список [] — це валідна відповідь (як у Node)
+        if tips is None:  # empty list [] is a valid response (as in Node)
             raise ApiError(404, "No recommendations found")
         return ok({
             "audienceId": _parse_int(audience_id),

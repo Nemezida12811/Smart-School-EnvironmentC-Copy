@@ -11,8 +11,8 @@ class Settings(BaseSettings):
     mqtt_url: str = ""
     mqtt_client_id: str = ""
     openai_api_key: str = ""
-    openai_model: str = "gpt-4o-mini"   # має підтримувати Structured Outputs (json_schema)
-    # облікові дані, які бекенд відправляє пристрою в MQTT-налаштуваннях
+    openai_model: str = "gpt-4o-mini"   # must support Structured Outputs (json_schema)
+    # credentials that backend sends to device in MQTT settings
     device_admin_login: str = "Admin"
     device_admin_password: str = "4444"
 

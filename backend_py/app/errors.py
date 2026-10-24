@@ -1,4 +1,4 @@
-"""Єдиний формат відповідей: {success, data} / {success: false, error: {...}}."""
+"""Unified response format: {success, data} / {success: false, error: {...}}."""
 import logging
 from contextlib import contextmanager
 from datetime import datetime, timezone
@@ -31,7 +31,7 @@ def _error_response(status: int, message: str, details: dict | None = None) -> J
 
 @contextmanager
 def failing_as(message: str, with_details: bool = False):
-    """Аналог try/catch у роутах: будь-яка несподівана помилка -> 500 з потрібним текстом."""
+    """Analog of try/catch in routes: any unexpected error -> 500 with desired text."""
     try:
         yield
     except ApiError:
@@ -42,7 +42,7 @@ def failing_as(message: str, with_details: bool = False):
 
 
 def iso(dt: datetime | None) -> str | None:
-    """Дата у форматі JS Date.toJSON(): 2025-12-16T15:00:00.000Z"""
+    """Date in JS Date.toJSON() format: 2025-12-16T15:00:00.000Z"""
     if dt is None:
         return None
     if dt.tzinfo is None:

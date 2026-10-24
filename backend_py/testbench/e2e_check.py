@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
-Наскрізна перевірка: пристрій(емулятор) -> MQTT -> backend -> MongoDB -> REST (те, що бачить frontend).
-Запускайте, коли працюють broker, backend і device_simulator.py.
+End-to-end test: device(emulator) -> MQTT -> backend -> MongoDB -> REST (what frontend sees).
+Run when broker, backend and device_simulator.py are running.
 
   python testbench/e2e_check.py --api http://localhost:3001 --broker localhost:1883
 """
@@ -60,16 +60,16 @@ def main():
     ap.add_argument("--api", default="http://localhost:3001")
     ap.add_argument("--broker", default="localhost:1883")
     ap.add_argument("--devices", type=int, default=3)
-    ap.add_argument("--ids", help="id пристроїв через кому (якщо не за замовчуванням)")
-    ap.add_argument("--wait", type=int, default=60, help="скільки чекати першу телеметрію, с")
+    ap.add_argument("--ids", help="device ids separated by comma (if not default)")
+    ap.add_argument("--wait", type=int, default=60, help="how long to wait for first telemetry, s")
     ap.add_argument("--wifi-ssid", default="Komiki"); ap.add_argument("--wifi-password", default="Parol222")
-    ap.add_argument("--keep", action="store_true", help="не видаляти створену локацію (щоб подивитись у frontend)")
+    ap.add_argument("--keep", action="store_true", help="do not delete created location (to view in frontend)")
     a = ap.parse_args()
     api = Api(a.api)
     ids = a.ids.split(",") if a.ids else [device_id_for(i) for i in range(a.devices)]
     rnd = "".join(random.choices(string.ascii_lowercase + string.digits, k=6))
 
-    print(f"\n== 1. Backend доступний ({a.api}) ==")
+    print(f"\n== 1. Backend available ({a.api}) ==")
     for _ in range(20):
         try:
             st, body = api.call("GET", "/")
@@ -77,10 +77,10 @@ def main():
         except OSError:
             time.sleep(1)
     else:
-        record("FAIL", "GET /", "backend не відповідає"); return finish()
-    check(st == 200 and body.get("message") == "Backend is running", "GET / відповідає")
+        record("FAIL", "GET /", "backend not responding"); return finish()
+    check(st == 200 and body.get("message") == "Backend is running", "GET / responds")
 
-    print("\n== 2. Телеметрія з емулятора дійшла до БД (device → MQTT → backend → MongoDB) ==")
+    print("\n== 2. Telemetry from emulator reached DB (device → MQTT → backend → MongoDB) ==")
     readings = {}
     deadline = time.time() + a.wait
     pending = set(ids)
@@ -91,82 +91,82 @@ def main():
                 readings[did] = body["data"]; pending.discard(did)
         time.sleep(1)
     for did in ids:
-        if not check(did in readings, f"телеметрія пристрою {did[4:12]}… збережена", f"немає даних за {a.wait} с — чи запущено device_simulator.py і той самий broker?"):
+        if not check(did in readings, f"device {did[4:12]}… telemetry saved", f"no data for {a.wait} s — is device_simulator.py running with same broker?"):
             continue
         d = readings[did]; r = d["latestReading"]
         check(set(r["units"]) == {"temperature", "humidity", "gas", "light", "sound"} and all(r["units"].values()),
-              "  units для 5 датчиків", str(r["units"]))
-        check(-10 <= r["temperature"] <= 50 and 0 <= r["humidity"] <= 100, "  температура/вологість правдоподібні", f"{r['temperature']}°C {r['humidity']}%")
+              "  units for 5 sensors", str(r["units"]))
+        check(-10 <= r["temperature"] <= 50 and 0 <= r["humidity"] <= 100, "  temperature/humidity plausible", f"{r['temperature']}°C {r['humidity']}%")
         check(200 <= r["gas"] <= 10000 and 40 <= r["sound"] <= 120 and 0.1 <= r["light"] <= 100000,
-              "  gas/sound/light у діапазонах конвертації backend", f"gas={r['gas']} sound={r['sound']} light={r['light']}")
+              "  gas/sound/light in backend conversion ranges", f"gas={r['gas']} sound={r['sound']} light={r['light']}")
         age = (datetime.now(timezone.utc) - parse_iso(d["timestamp"])).total_seconds()
-        check(-5 <= age <= 120, "  timestamp свіжий і розпізнаний (ISO від прошивки)", f"вік {age:.0f} с, timestamp={d['timestamp']}")
+        check(-5 <= age <= 120, "  timestamp fresh and recognized (ISO from firmware)", f"age {age:.0f} s, timestamp={d['timestamp']}")
         st, c = api.call("GET", f"/api/comfort/{did}")
         check(st == 200 and isinstance(c["data"]["comfortPercentage"], int) and 0 <= c["data"]["comfortPercentage"] <= 100,
-              "  відсоток комфорту 0..100", f"{st} {c}")
+              "  comfort percentage 0..100", f"{st} {c}")
     live_ids = [d for d in ids if d in readings]
 
     print("\n== 3. Auth ==")
     email, pw = f"e2e-{rnd}@test.local", "secret123"
     st, b = api.call("POST", "/api/auth/register", {"username": f"e2e-{rnd}", "email": email, "password": pw})
-    check(st == 201 and b["data"]["token"], "реєстрація → 201 + token", f"{st} {b}")
+    check(st == 201 and b["data"]["token"], "registration → 201 + token", f"{st} {b}")
     st, b2 = api.call("POST", "/api/auth/register", {"username": "x", "email": email, "password": pw})
-    check(st == 400, "дубль email → 400", f"{st}")
+    check(st == 400, "duplicate email → 400", f"{st}")
     st, b2 = api.call("POST", "/api/auth/login", {"email": email, "password": "wrong-pass"})
-    check(st == 401, "невірний пароль → 401", f"{st}")
+    check(st == 401, "wrong password → 401", f"{st}")
     st, lg = api.call("POST", "/api/auth/login", {"email": email, "password": pw})
     token = lg["data"]["token"]
-    check(st == 200 and lg["data"]["user"]["email"] == email, "логін")
+    check(st == 200 and lg["data"]["user"]["email"] == email, "login")
     st, me = api.call("GET", "/api/auth/me", token=token)
-    check(st == 200 and me["data"]["username"] == f"e2e-{rnd}", "GET /me з токеном")
-    check(api.call("GET", "/api/auth/me")[0] == 401, "GET /me без токена → 401")
+    check(st == 200 and me["data"]["username"] == f"e2e-{rnd}", "GET /me with token")
+    check(api.call("GET", "/api/auth/me")[0] == 401, "GET /me without token → 401")
 
-    print("\n== 4. Локації та кімнати (сценарій фронтенда) ==")
+    print("\n== 4. Locations and rooms (frontend scenario) ==")
     st, loc = api.call("POST", "/api/locations", {"name": f"E2E School {rnd}"}, token)
-    check(st == 201, "створення локації", f"{st} {loc}")
+    check(st == 201, "create location", f"{st} {loc}")
     lid = loc["data"]["id"]
     check(api.call("POST", f"/api/locations/{lid}/devices", {"deviceId": "com-ffffffffffffffff-fort"}, token)[0] == 404,
-          "додати неіснуючий пристрій → 404")
+          "add non-existent device → 404")
     for i, did in enumerate(live_ids):
-        st, _ = api.call("POST", f"/api/locations/{lid}/devices", {"deviceId": did, "name": f"Кабінет {i + 1}"}, token)
-        check(st == 200, f"додати пристрій {did[4:12]}… як «Кабінет {i + 1}»", f"{st}")
+        st, _ = api.call("POST", f"/api/locations/{lid}/devices", {"deviceId": did, "name": f"Room {i + 1}"}, token)
+        check(st == 200, f"add device {did[4:12]}… as "Room {i + 1}"", f"{st}")
     st, lst = api.call("GET", "/api/locations", token=token)
     mine = [x for x in lst["data"]["created"] if x["id"] == lid]
-    check(bool(mine) and sorted(mine[0]["deviceIds"]) == sorted(live_ids), "список локацій містить усі пристрої")
+    check(bool(mine) and sorted(mine[0]["deviceIds"]) == sorted(live_ids), "location list contains all devices")
     if live_ids:
         d0 = live_ids[0]
         st, s = api.call("GET", f"/api/comfort/{d0}/sensors")
-        check(s["data"]["name"] == "Кабінет 1" and s["data"]["hidden"] is False, "ім'я кімнати збережено", str(s))
+        check(s["data"]["name"] == "Room 1" and s["data"]["hidden"] is False, "room name saved", str(s))
         check(api.call("PATCH", f"/api/locations/{lid}/devices/{d0}/hide", token=token)[0] == 200
-              and api.call("GET", f"/api/comfort/{d0}/sensors")[1]["data"]["hidden"] is True, "приховати кімнату")
+              and api.call("GET", f"/api/comfort/{d0}/sensors")[1]["data"]["hidden"] is True, "hide room")
         check(api.call("PATCH", f"/api/locations/{lid}/devices/{d0}/show", token=token)[0] == 200
-              and api.call("GET", f"/api/comfort/{d0}/sensors")[1]["data"]["hidden"] is False, "показати кімнату")
+              and api.call("GET", f"/api/comfort/{d0}/sensors")[1]["data"]["hidden"] is False, "show room")
         st, rec = api.call("GET", f"/api/comfort/{d0}/recommendations")
         tips = rec.get("data", {}).get("recommendations")
-        check(st == 200 and isinstance(tips, list), "рекомендації: 200 і список", f"{st} {rec}")
-        check(bool(tips), "  AI повернув поради (потрібен OPENAI_API_KEY)", "порожній список", warn_only=True)
+        check(st == 200 and isinstance(tips, list), "recommendations: 200 and list", f"{st} {rec}")
+        check(bool(tips), "  AI returned tips (OPENAI_API_KEY needed)", "empty list", warn_only=True)
         if tips:
-            check(all({"priority", "type", "message", "reason"} <= set(t) for t in tips), "  структура порад")
+            check(all({"priority", "type", "message", "reason"} <= set(t) for t in tips), "  tips structure")
 
-    print("\n== 5. Другий користувач і права ==")
+    print("\n== 5. Second user and permissions ==")
     st, ub = api.call("POST", "/api/auth/register", {"username": f"guest-{rnd}", "email": f"guest-{rnd}@test.local", "password": pw})
     tok2, uid2 = ub["data"]["token"], ub["data"]["user"]["id"]
-    check(api.call("PATCH", f"/api/locations/{lid}", {"name": "hack"}, tok2)[0] == 403, "не-адмін не може перейменувати локацію → 403")
-    check(api.call("POST", f"/api/locations/{lid}/users", {"targetUserId": uid2}, token)[0] == 200, "адмін додає користувача")
+    check(api.call("PATCH", f"/api/locations/{lid}", {"name": "hack"}, tok2)[0] == 403, "non-admin cannot rename location → 403")
+    check(api.call("POST", f"/api/locations/{lid}/users", {"targetUserId": uid2}, token)[0] == 200, "admin adds user")
     st, l2 = api.call("GET", "/api/locations", token=tok2)
-    check(any(x["id"] == lid for x in l2["data"]["joined"]), "локація з'являється у 'joined' гостя")
+    check(any(x["id"] == lid for x in l2["data"]["joined"]), "location appears in guest's 'joined'")
     if live_ids:
-        check(api.call("PATCH", f"/api/locations/{lid}/devices/{live_ids[0]}/hide", token=tok2)[0] == 403, "гість не може ховати кімнату → 403")
-    check(api.call("DELETE", f"/api/locations/{lid}/users/{uid2}", token=token)[0] == 200, "адмін видаляє користувача")
+        check(api.call("PATCH", f"/api/locations/{lid}/devices/{live_ids[0]}/hide", token=tok2)[0] == 403, "guest cannot hide room → 403")
+    check(api.call("DELETE", f"/api/locations/{lid}/users/{uid2}", token=token)[0] == 200, "admin removes user")
 
-    print("\n== 6. Налаштування пристрою: backend → MQTT → пристрій → нові дані ==")
+    print("\n== 6. Device settings: backend → MQTT → device → new data ==")
     if live_ids:
         d0 = live_ids[0]
-        body = {"name": "Кабінет 1 (перейм.)", "units": "metric", "interval": 3000, "ntpHost": "pool.ntp.org",
+        body = {"name": "Room 1 (renamed)", "units": "metric", "interval": 3000, "ntpHost": "pool.ntp.org",
                 "brokerAddress": a.broker.split(":")[0], "wifiSsid": a.wifi_ssid, "wifiPassword": a.wifi_password}
         st, r = api.call("PATCH", f"/api/locations/{lid}/devices/{d0}/settings", body, token)
-        check(st == 200 and r["data"]["topic"] == f"iot/backend/{d0}/settings", "PATCH settings опубліковано в MQTT", f"{st} {r}")
-        print("   чекаю, поки пристрій застосує налаштування (інтервал 3 с, units=metric)…")
+        check(st == 200 and r["data"]["topic"] == f"iot/backend/{d0}/settings", "PATCH settings published to MQTT", f"{st} {r}")
+        print("   waiting for device to apply settings (interval 3 s, units=metric)…")
         stamps, units, t_end = set(), None, time.time() + 45
         while time.time() < t_end:
             s = api.call("GET", f"/api/comfort/{d0}/sensors")[1]["data"]
@@ -175,15 +175,15 @@ def main():
             if units == "metric":
                 break
             time.sleep(1)
-        check(units == "metric", "пристрій застосував units=metric (видно в REST)", f"units={units} — чи запущено емулятор з тим самим Wi-Fi?")
+        check(units == "metric", "device applied units=metric (visible in REST)", f"units={units} — is emulator running with same Wi-Fi?")
         seen, t_end = {}, time.time() + 12
         while time.time() < t_end:
             seen[api.call("GET", f"/api/comfort/{d0}/sensors")[1]["data"]["timestamp"]] = 1
             time.sleep(0.5)
-        check(len(seen) >= 3, "частота оновлень зросла (≥3 нових timestamp за 12 с при інтервалі 3 с)", f"було {len(seen)}")
-        check(api.call("GET", f"/api/comfort/{d0}/sensors")[1]["data"]["name"] == "Кабінет 1 (перейм.)", "нове ім'я кімнати збережено")
+        check(len(seen) >= 3, "update frequency increased (≥3 new timestamps in 12 s with interval 3 s)", f"was {len(seen)}")
+        check(api.call("GET", f"/api/comfort/{d0}/sensors")[1]["data"]["name"] == "Room 1 (renamed)", "new room name saved")
 
-        # Прошивка відхиляє налаштування з неправильним Wi-Fi — частота не має змінитись на 20 с
+        # Firmware rejects settings with wrong Wi-Fi — frequency should not change to 20 s
         bad = dict(body, interval=20000, wifiPassword="WRONG-PASSWORD")
         api.call("PATCH", f"/api/locations/{lid}/devices/{d0}/settings", bad, token)
         time.sleep(5)
@@ -191,11 +191,11 @@ def main():
         while time.time() < t_end:
             seen[api.call("GET", f"/api/comfort/{d0}/sensors")[1]["data"]["timestamp"]] = 1
             time.sleep(0.5)
-        check(len(seen) >= 2, "налаштування з хибним Wi-Fi відхилено пристроєм (частота лишилась ~3 с)", f"{len(seen)} оновл. за 10 с",
+        check(len(seen) >= 2, "settings with wrong Wi-Fi rejected by device (frequency remained ~3 s)", f"{len(seen)} updates in 10 s",
               warn_only=True)
         api.call("PATCH", f"/api/locations/{lid}/devices/{d0}/settings", dict(body, interval=10000), token)
 
-    print("\n== 7. Стійкість до некоректної телеметрії та формати часу ==")
+    print("\n== 7. Resistance to incorrect telemetry and time formats ==")
     try:
         import paho.mqtt.client as mqtt
         host, _, port = a.broker.partition(":")
@@ -217,27 +217,27 @@ def main():
                 c.publish(f"iot/device/{dev}/telemetry", m, qos=1).wait_for_publish(3)
         time.sleep(2)
         st, _ = api.call("GET", f"/api/comfort/{base}bad-fort/sensors")
-        check(st == 404, "некоректні payload (не JSON / без датчиків / без units) відкинуто", f"статус {st}")
+        check(st == 404, "incorrect payloads (not JSON / no sensors / no units) rejected", f"status {st}")
         for kind in ("iso", "epoch"):
             st, r = api.call("GET", f"/api/comfort/{base}{kind}-fort/sensors")
             ok = st == 200 and r["data"]["timestamp"] == "2025-12-17T13:33:07.000Z"
-            check(ok, f"timestamp у форматі {kind.upper()} розпізнано коректно", f"{st} {r.get('data', {}).get('timestamp')}")
+            check(ok, f"timestamp in {kind.upper()} format recognized correctly", f"{st} {r.get('data', {}).get('timestamp')}")
         c.loop_stop(); c.disconnect()
     except OSError as exc:
-        record("SKIP", "перевірка некоректної телеметрії", f"broker недоступний: {exc}")
+        record("SKIP", "incorrect telemetry check", f"broker unavailable: {exc}")
 
-    print("\n== 8. Прибирання ==")
+    print("\n== 8. Cleanup ==")
     if a.keep:
-        record("SKIP", "видалення локації", f"залишено для перегляду у frontend: {email} / {pw}")
+        record("SKIP", "location deletion", f"left for viewing in frontend: {email} / {pw}")
     else:
-        check(api.call("DELETE", f"/api/locations/{lid}", token=token)[0] == 200, "видалення локації")
-        check(api.call("GET", f"/api/locations/{lid}")[0] == 404, "локація зникла")
+        check(api.call("DELETE", f"/api/locations/{lid}", token=token)[0] == 200, "delete location")
+        check(api.call("GET", f"/api/locations/{lid}")[0] == 404, "location disappeared")
     finish()
 
 
 def finish():
     n = {k: sum(1 for r in RESULTS if r[0] == k) for k in ("PASS", "FAIL", "WARN", "SKIP")}
-    print(f"\n{'=' * 60}\nПідсумок: ✅ {n['PASS']}  ❌ {n['FAIL']}  ⚠️  {n['WARN']}  ⏭ {n['SKIP']}")
+    print(f"\n{'=' * 60}\nSummary: ✅ {n['PASS']}  ❌ {n['FAIL']}  ⚠️  {n['WARN']}  ⏭ {n['SKIP']}")
     for s, name, detail in RESULTS:
         if s in ("FAIL", "WARN"):
             print(f"  {s}: {name} {detail}")

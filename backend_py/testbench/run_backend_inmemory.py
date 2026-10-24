@@ -43,7 +43,7 @@ class _FakeDb:
 
 async def _connect(uri, name):
     database.db = _FakeDb()
-    print("✅ In-memory database (mongomock) — дані не зберігаються між запусками")
+    print("✅ In-memory database (mongomock) — data not saved between runs")
 
 database.connect = _connect
 

@@ -4,7 +4,7 @@ from pydantic import BaseModel, ConfigDict
 
 
 class _Body(BaseModel):
-    # усі поля необов'язкові: перевірку робимо вручну, щоб повертати ті самі 400-повідомлення
+    # all fields optional: validation done manually to return same 400 messages
     model_config = ConfigDict(extra="ignore")
 
 

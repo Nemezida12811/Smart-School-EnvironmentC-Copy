@@ -52,7 +52,7 @@ async def get_locations(user_id: str = Depends(current_user_id)):
 
 @router.get("/{location_id}")
 async def get_location(location_id: str):
-    # як і в оригіналі — без авторизації
+    # as in original — without authorization
     with failing_as("Internal server error"):
         return ok(Locations.to_json(await _get_location(location_id)))
 
@@ -81,7 +81,7 @@ async def delete_location(location_id: str, user_id: str = Depends(current_user_
         return ok({"message": "Location deleted"})
 
 
-# ───────────── користувачі ─────────────
+# ───────────── users ─────────────
 @router.post("/{location_id}/users")
 async def add_user(location_id: str, body: TargetUserBody = TargetUserBody(),
                    user_id: str = Depends(current_user_id)):
@@ -91,8 +91,8 @@ async def add_user(location_id: str, body: TargetUserBody = TargetUserBody(),
             raise ApiError(400, "targetUserId is required")
         location = await _get_location(location_id)
 
-        # УВАГА: у Node-версії перевірка адміна тут була закоментована
-        # (будь-який авторизований користувач може додати будь-кого). Поведінку збережено.
+        # WARNING: in Node-version admin check here was commented out
+        # (any authorized user can add anyone). Behavior preserved.
         # _require_admin(location, user_id, "Only admin can add users")
 
         if not await Users.find_by_id(target):
@@ -118,7 +118,7 @@ async def remove_user(location_id: str, target_user_id: str, user_id: str = Depe
         return ok({"message": "User removed from location"})
 
 
-# ───────────── пристрої ─────────────
+# ───────────── devices ─────────────
 @router.post("/{location_id}/devices")
 async def add_device(location_id: str, body: AddDeviceBody = AddDeviceBody(),
                      user_id: str = Depends(current_user_id)):

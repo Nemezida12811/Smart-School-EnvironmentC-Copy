@@ -1,4 +1,4 @@
-"""Смоук-тест усього API на mongomock (реальна MongoDB не потрібна)."""
+"""Smoke test of entire API on mongomock (real MongoDB not needed)."""
 import asyncio
 import json
 import os
@@ -38,7 +38,7 @@ class _FakeDb:
 @pytest.fixture()
 def client():
     database.db = _FakeDb()
-    return TestClient(app)  # без `with` -> lifespan (реальні Mongo/MQTT) не запускається
+    return TestClient(app)  # without `with` -> lifespan (real Mongo/MQTT) does not start
 
 
 def hdr(token): return {"Authorization": f"Bearer {token}"}
@@ -111,7 +111,7 @@ def test_locations_and_devices(client):
 
 
 def _fake_ai(create):
-    """Підміна OpenAI-клієнта: об'єкт із chat.completions.create(**kwargs)."""
+    """OpenAI client replacement: object with chat.completions.create(**kwargs)."""
     ns = lambda **kw: type("N", (), kw)  # noqa: E731
     return ns(chat=ns(completions=ns(create=staticmethod(create))))
 
@@ -156,17 +156,17 @@ def test_telemetry_helpers():
 
 
 def test_timestamp_formats():
-    assert parse_timestamp(1765978387) == 1765978387000          # epoch, секунди (MQTT.md)
+    assert parse_timestamp(1765978387) == 1765978387000          # epoch, seconds (MQTT.md)
     assert parse_timestamp("1765978387") == 1765978387000
-    assert parse_timestamp("2025-12-17T13:33:07Z") == 1765978387000   # ISO — формат прошивки
-    assert parse_timestamp(1765978387000) == 1765978387000       # мілісекунди
+    assert parse_timestamp("2025-12-17T13:33:07Z") == 1765978387000   # ISO — firmware format
+    assert parse_timestamp(1765978387000) == 1765978387000       # milliseconds
     import time
     assert abs(parse_timestamp(None) - time.time() * 1000) < 2000
     assert abs(parse_timestamp("garbage") - time.time() * 1000) < 2000
 
 
 def test_openai_api_connection():
-    """Перевіряє реальне підключення до OpenAI API."""
+    """Checks real connection to OpenAI API."""
     from openai import OpenAI
     from dotenv import load_dotenv
 

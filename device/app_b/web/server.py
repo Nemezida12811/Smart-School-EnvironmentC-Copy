@@ -326,7 +326,7 @@ def start_webserver(device):
                 await asyncio.sleep(0.8)
                 
         except asyncio.CancelledError:
-            log.debug(">> Сlient disconnected")
+            log.debug(">> Client disconnected")
 
 
     @app.route('/setup', methods=['GET', 'POST'])

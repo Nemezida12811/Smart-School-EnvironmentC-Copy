@@ -1,4 +1,4 @@
-"""Доступ до MongoDB. Структура колекцій і документів 1:1 з Node-версією."""
+"""MongoDB access. Collection and document structure 1:1 with Node version."""
 from datetime import datetime, timezone
 
 from bson import ObjectId
@@ -94,7 +94,7 @@ class Locations:
         res = await cls._c().insert_one({
             "name": name,
             "adminId": admin,
-            "userIds": [admin],  # адмін є також користувачем
+            "userIds": [admin],  # admin is also a user
             "deviceIds": [],
             "createdAt": _now(),
         })
@@ -147,7 +147,7 @@ class Locations:
 
 # ──────────────────────── sensor_readings ────────────────────────
 class SensorReadings:
-    """Одна запис на пристрій: зберігається лише останнє вимірювання (upsert)."""
+    """One record per device: only last measurement is saved (upsert)."""
 
     @staticmethod
     def _c():

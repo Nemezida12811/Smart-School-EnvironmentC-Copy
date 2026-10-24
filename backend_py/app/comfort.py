@@ -8,7 +8,7 @@ from .repositories import SensorReadings
 
 log = logging.getLogger("comfort")
 
-# (поле, ідеальний діапазон, поріг штрафу)
+# (field, ideal range, penalty threshold)
 _METRICS = [
     ("temperature", (20, 24), 5),
     ("humidity", (30, 60), 30),
@@ -17,8 +17,8 @@ _METRICS = [
     ("sound", (0, 50), 40),
 ]
 
-# Structured Outputs: модель гарантовано повертає JSON саме такої форми.
-# Корінь мусить бути об'єктом, тому масив порад лежить у полі "recommendations".
+# Structured Outputs: model guaranteed to return JSON exactly of this form.
+# Root must be an object, so tips array is in "recommendations" field.
 _TIPS_SCHEMA = {
     "name": "comfort_recommendations",
     "strict": True,
@@ -49,7 +49,7 @@ _ai_client = None
 
 
 def _get_ai():
-    """Створюється ліниво, щоб відсутній OPENAI_API_KEY не ламав запуск сервера."""
+    """Created lazily, so missing OPENAI_API_KEY does not break server startup."""
     global _ai_client
     if _ai_client is None:
         from openai import AsyncOpenAI
@@ -67,7 +67,7 @@ def calculate_manual_comfort(latest: dict) -> int:
         elif val > hi:
             score = 1 - (val - hi) / threshold
         total += max(0.0, min(1.0, score))
-    return math.floor(total / len(_METRICS) * 100 + 0.5)  # як Math.round
+    return math.floor(total / len(_METRICS) * 100 + 0.5)  # like Math.round
 
 
 async def calculate_comfort_by_audience(audience_id: str) -> dict | None:

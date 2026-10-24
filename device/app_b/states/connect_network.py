@@ -25,7 +25,7 @@ class ConnectNetwork(AbstractState):
         ssid, key, ntp_host, error = get_wifi_data(self.device.config)
         
         if error:
-            self.device.errcode = 4  # TODO: мб лучше для одного состояния свой код ошибки
+            self.device.errcode = 4  # TODO: maybe better to have separate error code for each state
             self.device.change_state(Error(self.device, "Error"))
             return
         

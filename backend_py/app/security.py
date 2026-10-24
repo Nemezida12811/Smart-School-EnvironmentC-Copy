@@ -21,7 +21,7 @@ def validate_password(password: str) -> bool:
 
 
 def _pw(password: str) -> bytes:
-    # bcrypt бере максимум 72 байти (Node-версія мовчки обрізала, bcrypt>=5 у Python кидає помилку)
+    # bcrypt takes maximum 72 bytes (Node-version silently truncated, bcrypt>=5 in Python throws error)
     return password.encode()[:72]
 
 
@@ -44,7 +44,7 @@ def generate_token(user_id: str) -> str:
 
 
 async def current_user_id(authorization: str | None = Header(default=None)) -> str:
-    """FastAPI-залежність (аналог verifyTokenMiddleware): повертає id користувача з JWT."""
+    """FastAPI-dependency (analog of verifyTokenMiddleware): returns user id from JWT."""
     if not authorization or not authorization.startswith("Bearer "):
         raise ApiError(401, "No token provided")
     try:

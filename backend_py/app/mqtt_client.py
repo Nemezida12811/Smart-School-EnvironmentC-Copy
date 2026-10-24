@@ -29,7 +29,7 @@ class MqttClient:
         self._handler = None
 
     def initialize(self, loop: asyncio.AbstractEventLoop, handler) -> None:
-        """handler(topic, payload_bytes) — async-функція, виконується в event loop FastAPI."""
+        """handler(topic, payload_bytes) — async-function, executes in FastAPI event loop."""
         if not settings.mqtt_url:
             log.warning("⚠️ MQTT_URL is not set — MQTT is disabled")
             return
@@ -61,7 +61,7 @@ class MqttClient:
         client.connect_async(url.hostname, url.port or default_port)
         client.loop_start()
 
-    # Колбеки paho працюють у власному потоці
+    # Paho callbacks work in their own thread
     def _on_connect(self, client, userdata, flags, reason_code, properties):
         if reason_code.is_failure:
             log.error("❌ MQTT error: %s", reason_code)

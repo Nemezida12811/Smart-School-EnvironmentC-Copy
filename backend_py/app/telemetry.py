@@ -1,4 +1,4 @@
-"""Обробка MQTT-телеметрії (аналог mqtt.service.js + mqtt.topics.js)."""
+"""MQTT telemetry processing (analog of mqtt.service.js + mqtt.topics.js)."""
 import json
 import logging
 import math
@@ -24,7 +24,7 @@ def get_device_id(topic: str) -> str | None:
 
 
 def _number(sensor: dict, key: str = "value") -> float:
-    """Як Number(x) у JS для відсутнього/null/нечислового значення."""
+    """Like Number(x) in JS for missing/null/non-numeric value."""
     if key not in sensor:
         return math.nan
     v = sensor[key]
@@ -37,10 +37,10 @@ def _number(sensor: dict, key: str = "value") -> float:
 
 
 def parse_timestamp(ts) -> float:
-    """Повертає мілісекунди epoch. Приймає:
-      - число/рядок-число: epoch у секундах (як у MQTT.md); значення > 1e11 вважаються мілісекундами;
-      - ISO-8601 рядок 'YYYY-MM-DDTHH:MM:SSZ' — саме так шле справжня прошивка (to_iso8601).
-    Якщо час відсутній або нерозбірливий — береться час сервера (вимірювання не втрачається)."""
+    """Returns epoch milliseconds. Accepts:
+      - number/string-number: epoch in seconds (as in MQTT.md); values > 1e11 are considered milliseconds;
+      - ISO-8601 string 'YYYY-MM-DDTHH:MM:SSZ' — exactly what real firmware sends (to_iso8601).
+    If time is missing or unparseable — server time is used (measurement is not lost)."""
     now_ms = time.time() * 1000
     if ts is None or ts == "" or isinstance(ts, bool):
         return now_ms
@@ -84,7 +84,7 @@ def is_valid(t: dict) -> bool:
 
 
 def convert_units(t: dict) -> dict:
-    """Сирі 16-бітні значення АЦП -> фізичні величини (діапазони як у Node-версії)."""
+    """Raw 16-bit ADC values -> physical values (ranges as in Node version)."""
     def map_value(val: float, lo: float, hi: float) -> float:
         return lo + (val / _RAW_MAX) * (hi - lo)
 
